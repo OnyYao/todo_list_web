@@ -56,6 +56,12 @@ A multiuser TODO list web app built with Django and JavaScript for CMU students 
 
 6. Open http://127.0.0.1:8000/ in your browser.
 
+## Running tests
+
+```bash
+python manage.py test
+```
+
 ## Morning Reminders
 
 To send daily email reminders for tasks due today:
