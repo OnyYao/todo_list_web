@@ -86,3 +86,4 @@ To send daily email reminders for tasks due today:
 The list below is updated automatically when a pull request is merged into the default branch.
 
 - AvalonMei 2026-03-24 Add task editing functionality and improve form styling
+- OnyYao 2026-03-24 Update: update the readme.md
