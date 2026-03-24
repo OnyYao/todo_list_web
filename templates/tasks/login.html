@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Login - CMU Todo{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/auth.css' %}">
+{% endblock %}
+{% block content %}
+<div class="auth-page">
+    <div class="auth-card">
+        <h1>CMU Todo</h1>
+        <p class="subtitle">Track your class tasks and never miss a deadline</p>
+        <form id="login-form" class="auth-form">
+            {% csrf_token %}
+            <input type="text" name="username" placeholder="Username" required autofocus>
+            <input type="password" name="password" placeholder="Password" required>
+            <button type="submit">Log in</button>
+        </form>
+        <p id="error" class="error"></p>
+        <p class="auth-link">Don't have an account? <a href="/register/">Sign up</a></p>
+    </div>
+</div>
+<script>
+    (function() {
+        const form = document.getElementById('login-form');
+        const err = document.getElementById('error');
+        if (!form || !err) return;
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            err.textContent = '';
+            const csrfToken = form.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+            try {
+                const res = await fetch('/login/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                    body: JSON.stringify({ username: form.username.value, password: form.password.value })
+                });
+                const data = await res.json().catch(() => ({}));
+                if (data.success) window.location = data.redirect || '/';
+                else err.textContent = data.error || 'Login failed';
+            } catch (e) {
+                err.textContent = 'Network error. Please try again.';
+            }
+        });
+    })();
+</script>
+{% endblock %}
