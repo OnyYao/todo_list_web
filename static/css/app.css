@@ -130,6 +130,13 @@
     display: none;
 }
 
+.task-form-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin: 0 0 0.75rem;
+}
+
 .task-form input,
 .task-form textarea {
     width: 100%;
@@ -304,6 +311,10 @@
 
 .task-actions button:hover {
     color: var(--danger);
+}
+
+.task-actions .btn-edit:hover {
+    color: var(--accent);
 }
 
 .hidden {
