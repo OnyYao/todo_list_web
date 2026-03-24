@@ -34,9 +34,12 @@ const btnAdd = document.getElementById('btn-add');
 const btnCancel = document.getElementById('btn-cancel');
 const filterBtns = document.querySelectorAll('.filter-btn');
 const reminderHeader = document.querySelector('.reminder-header h2');
+const taskFormLabel = document.getElementById('task-form-label');
+const taskFormSubmit = document.getElementById('task-form-submit');
 
 let allTasks = [];
 let currentFilter = 'all';
+let editingTaskId = null;
 
 function formatDate(iso) {
     const d = new Date(iso);
@@ -74,13 +77,16 @@ function renderTaskItem(task, container) {
             </div>
         </div>
         <div class="task-actions">
+            <button type="button" class="btn-edit">Edit</button>
             <button type="button" class="btn-delete">Delete</button>
         </div>
     `;
 
     const checkEl = li.querySelector('.task-check');
+    const editBtn = li.querySelector('.btn-edit');
     const deleteBtn = li.querySelector('.btn-delete');
     if (checkEl) checkEl.addEventListener('change', () => toggleComplete(task.id));
+    if (editBtn) editBtn.addEventListener('click', () => beginEdit(task));
     if (deleteBtn) deleteBtn.addEventListener('click', () => deleteTask(task.id));
 
     container.appendChild(li);
@@ -90,6 +96,35 @@ function escapeHtml(s) {
     const div = document.createElement('div');
     div.textContent = s;
     return div.innerHTML;
+}
+
+function setTaskFormMode(isEdit) {
+    if (taskFormLabel) taskFormLabel.textContent = isEdit ? 'Edit task' : 'New task';
+    if (taskFormSubmit) taskFormSubmit.textContent = isEdit ? 'Save changes' : 'Add task';
+}
+
+function resetTaskForm() {
+    if (!taskForm) return;
+    editingTaskId = null;
+    taskForm.reset();
+    taskForm.classList.add('hidden');
+    setTaskFormMode(false);
+}
+
+function beginEdit(task) {
+    if (!taskForm) return;
+    editingTaskId = task.id;
+    taskForm.classList.remove('hidden');
+    setTaskFormMode(true);
+    const titleEl = taskForm.querySelector('[name=title]');
+    const descEl = taskForm.querySelector('[name=description]');
+    const dueEl = taskForm.querySelector('[name=due_date]');
+    const courseEl = taskForm.querySelector('[name=course]');
+    if (titleEl) titleEl.value = task.title || '';
+    if (descEl) descEl.value = task.description || '';
+    if (dueEl) dueEl.value = task.due_date || '';
+    if (courseEl) courseEl.value = task.course || '';
+    taskForm.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
 function updateReminderHeader(count) {
@@ -175,6 +210,9 @@ async function deleteTask(id) {
 
 if (btnAdd && taskForm) {
     btnAdd.addEventListener('click', () => {
+        editingTaskId = null;
+        setTaskFormMode(false);
+        taskForm.reset();
         taskForm.classList.remove('hidden');
         const today = new Date().toISOString().slice(0, 10);
         const dueInput = taskForm.querySelector('[name=due_date]');
@@ -183,10 +221,7 @@ if (btnAdd && taskForm) {
 }
 
 if (btnCancel && taskForm) {
-    btnCancel.addEventListener('click', () => {
-        taskForm.classList.add('hidden');
-        taskForm.reset();
-    });
+    btnCancel.addEventListener('click', () => resetTaskForm());
 }
 
 if (taskForm) {
@@ -200,18 +235,31 @@ if (taskForm) {
             course: fd.get('course') || ''
         };
         try {
-            const res = await API.create(data);
-            const result = res && typeof res === 'object' ? res : {};
-            if (result.success) {
-                allTasks.push(result.task);
-                renderTodayTasks();
-                filterTasks();
-                taskForm.reset();
-                taskForm.classList.add('hidden');
+            if (editingTaskId != null) {
+                const res = await API.update(editingTaskId, data);
+                const result = res && typeof res === 'object' ? res : {};
+                if (result.success && result.task) {
+                    const i = allTasks.findIndex(t => t.id === editingTaskId);
+                    if (i !== -1) allTasks[i] = result.task;
+                    renderTodayTasks();
+                    filterTasks();
+                    resetTaskForm();
+                } else {
+                    alert(result.error || 'Failed to update task');
+                }
             } else {
-                alert(result.error || 'Failed to add task');
+                const res = await API.create(data);
+                const result = res && typeof res === 'object' ? res : {};
+                if (result.success) {
+                    allTasks.push(result.task);
+                    renderTodayTasks();
+                    filterTasks();
+                    resetTaskForm();
+                } else {
+                    alert(result.error || 'Failed to add task');
+                }
             }
-        } catch (e) {
+        } catch (err) {
             alert('Network error. Please try again.');
         }
     });
