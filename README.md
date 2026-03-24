@@ -4,7 +4,7 @@ A multiuser TODO list web app built with Django and JavaScript for CMU students 
 
 ## User Stories
 
-1. **As an undergraduate at CMU**, I want to write down a list of tasks I have to do for my classes with due dates for each so that I don't forget what my teachers have assigned me to do.
+1. **As an student at CMU**, I want to write down a list of tasks I have to do for my classes with due dates for each so that I don't forget what my teachers have assigned me to do.
 
 2. **As a busy college student**, I want to be reminded every morning about the things I need to finish that day so that I can plan how to get my tasks done throughout the day.
 
