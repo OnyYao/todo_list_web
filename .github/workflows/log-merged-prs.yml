@@ -1,0 +1,63 @@
+# Appends author, merge date, and PR title to README.md when a PR is merged.
+name: Log merged PRs
+
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+# Serialize so concurrent merges do not clobber README updates.
+concurrency:
+  group: readme-merge-log
+  cancel-in-progress: false
+
+jobs:
+  append-readme:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout default branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.ref }}
+          fetch-depth: 0
+
+      - name: Pull latest (avoid race with concurrent merges)
+        run: git pull --rebase origin "${{ github.event.pull_request.base.ref }}"
+
+      - name: Append merged PR to README
+        env:
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+          MERGED_AT: ${{ github.event.pull_request.merged_at }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          python3 << 'PY'
+          import os
+
+          author = os.environ["PR_AUTHOR"]
+          merged = os.environ.get("MERGED_AT") or ""
+          title = os.environ.get("PR_TITLE", "").replace("\n", " ").strip()
+          date = merged.split("T")[0] if merged else ""
+
+          line = f"- {author} {date} {title}\n"
+          with open("README.md", "a", encoding="utf-8") as f:
+              f.write(line)
+          PY
+
+      - name: Commit and push
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add README.md
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          git commit -m "chore: log merged PR #${{ github.event.pull_request.number }}"
+          git push origin "HEAD:${BASE_REF}"

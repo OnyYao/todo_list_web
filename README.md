@@ -80,3 +80,8 @@ To send daily email reminders for tasks due today:
 - **Backend**: Django 5
 - **Frontend**: Vanilla JavaScript, CSS
 - **Database**: SQLite (default)
+
+## Approved PRs
+
+The list below is updated automatically when a pull request is merged into the default branch.
+
